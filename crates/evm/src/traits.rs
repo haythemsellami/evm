@@ -10,6 +10,7 @@ use revm::{
     primitives::{StorageKey, StorageValue},
     state::{Account, AccountInfo, Bytecode},
 };
+use revm::context::journaled_state::account::JournaledAccountTr;
 
 /// Erased error type.
 #[derive(thiserror::Error, Debug)]
