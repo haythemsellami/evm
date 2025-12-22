@@ -11,7 +11,7 @@ use alloy_evm::{precompiles::PrecompilesMap, Database, Evm, EvmEnv, EvmFactory};
 use alloy_primitives::{Address, Bytes};
 use monad_revm::{
     instructions::MonadInstructions, precompiles::MonadPrecompiles, DefaultMonad, MonadBuilder,
-    MonadEvm as InnerMonadEvm, MonadSpecId,
+    MonadCfgEnv, MonadEvm as InnerMonadEvm, MonadSpecId,
 };
 use revm::{
     context::{BlockEnv, TxEnv},
@@ -122,7 +122,9 @@ where
     }
 
     fn finish(self) -> (Self::DB, EvmEnv<Self::Spec>) {
-        let Context { block: block_env, cfg: cfg_env, journaled_state, .. } = self.inner.0.ctx;
+        let Context { block: block_env, cfg: monad_cfg, journaled_state, .. } = self.inner.0.ctx;
+        // Convert MonadCfgEnv back to CfgEnv<MonadSpecId> for EvmEnv
+        let cfg_env = monad_cfg.into_inner();
 
         (journaled_state.database, EvmEnv { block_env, cfg_env })
     }
@@ -171,11 +173,13 @@ impl EvmFactory for MonadEvmFactory {
         input: EvmEnv<MonadSpecId>,
     ) -> Self::Evm<DB, NoOpInspector> {
         let spec_id = input.cfg_env.spec;
+        // Convert CfgEnv<MonadSpecId> to MonadCfgEnv for Monad-specific defaults (128KB code size)
+        let monad_cfg = MonadCfgEnv::from(input.cfg_env);
         MonadEvm {
             inner: Context::monad()
                 .with_db(db)
                 .with_block(input.block_env)
-                .with_cfg(input.cfg_env)
+                .with_cfg(monad_cfg)
                 .build_monad_with_inspector(NoOpInspector {})
                 .with_precompiles(PrecompilesMap::from_static(
                     MonadPrecompiles::new_with_spec(spec_id).precompiles(),
@@ -191,11 +195,13 @@ impl EvmFactory for MonadEvmFactory {
         inspector: I,
     ) -> Self::Evm<DB, I> {
         let spec_id = input.cfg_env.spec;
+        // Convert CfgEnv<MonadSpecId> to MonadCfgEnv for Monad-specific defaults (128KB code size)
+        let monad_cfg = MonadCfgEnv::from(input.cfg_env);
         MonadEvm {
             inner: Context::monad()
                 .with_db(db)
                 .with_block(input.block_env)
-                .with_cfg(input.cfg_env)
+                .with_cfg(monad_cfg)
                 .build_monad_with_inspector(inspector)
                 .with_precompiles(PrecompilesMap::from_static(
                     MonadPrecompiles::new_with_spec(spec_id).precompiles(),
