@@ -17,8 +17,7 @@ workspace = true
 alloy-evm.workspace = true
 alloy-primitives.workspace = true
 revm.workspace = true
-# monad-revm = { git = "https://github.com/haythemsellami/revm", branch = "monad-revm", package = "monad-revm" }
-monad-revm = { path = "../../../../revm/crates/monad-revm" }
+monad-revm.workspace = true
 
 [dev-dependencies]
 test-case.workspace = true
