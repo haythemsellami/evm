@@ -471,6 +471,6 @@ pub trait BlockExecutorFactory: 'static {
         ctx: Self::ExecutionCtx<'a>,
     ) -> impl BlockExecutorFor<'a, Self, DB, I>
     where
-        DB: Database + 'a,
+        DB: Database + revm::DatabaseCommit + 'a,
         I: Inspector<<Self::EvmFactory as EvmFactory>::Context<&'a mut State<DB>>> + 'a;
 }

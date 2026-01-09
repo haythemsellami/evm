@@ -8,6 +8,10 @@
 
 `alloy-evm` is compatible with no_std and riscv targets.
 
+## Alloy Monad EVM
+
+`alloy-monad-evm` provides Monad chain support by wrapping [monad-revm](https://github.com/haythemsellami/revm/tree/main/crates/monad-revm) with `alloy-evm` traits (`Evm`, `EvmFactory`). It includes Monad-specific gas costs for cold storage/account access and custom precompile pricing.
+
 #### License
 
 <sup>

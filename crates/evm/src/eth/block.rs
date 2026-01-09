@@ -21,8 +21,8 @@ use alloy_eips::{eip4895::Withdrawals, eip7685::Requests, Encodable2718};
 use alloy_hardforks::EthereumHardfork;
 use alloy_primitives::{Bytes, Log, B256};
 use revm::{
-    context::Block, context_interface::result::ResultAndState, database::State, DatabaseCommit,
-    Inspector,
+    context::Block, context_interface::result::ResultAndState, database::State,
+    database_interface::DatabaseCommitExt, DatabaseCommit, Inspector,
 };
 
 /// Context for Ethereum block execution.
@@ -320,7 +320,7 @@ where
         ctx: Self::ExecutionCtx<'a>,
     ) -> impl BlockExecutorFor<'a, Self, DB, I>
     where
-        DB: Database + 'a,
+        DB: Database + revm::DatabaseCommit + 'a,
         I: Inspector<EvmF::Context<&'a mut State<DB>>> + 'a,
     {
         EthBlockExecutor::new(evm, ctx, &self.spec, &self.receipt_builder)
