@@ -59,7 +59,7 @@ op-alloy = { version = "0.23", default-features = false, features = [
 # revm
 revm = { version = "33.0.0", default-features = false }
 op-revm = { version = "14.0.0", default-features = false }
-monad-revm = { git = "https://github.com/haythemsellami/revm", branch = "main" }
+monad-revm = { git = "https://github.com/haythemsellami/revm", branch = "merge-a31fa98efe2208af326cf70f59d374165e0df363" }
 # monad-revm = { path = "../../revm/crates/monad-revm" }
 
 # misc
@@ -71,9 +71,9 @@ serde_json = "1"
 test-case = "3"
 
 [patch.crates-io]
-revm = { git = "https://github.com/haythemsellami/revm", branch = "main" }
-op-revm = { git = "https://github.com/haythemsellami/revm", branch = "main" }
-monad-revm = { git = "https://github.com/haythemsellami/revm", branch = "main" }
+revm = { git = "https://github.com/haythemsellami/revm", branch = "merge-a31fa98efe2208af326cf70f59d374165e0df363" }
+op-revm = { git = "https://github.com/haythemsellami/revm", branch = "merge-a31fa98efe2208af326cf70f59d374165e0df363" }
+monad-revm = { git = "https://github.com/haythemsellami/revm", branch = "merge-a31fa98efe2208af326cf70f59d374165e0df363" }
 # revm = { path = "../../revm/crates/revm" }
 # op-revm = { path = "../../revm/crates/op-revm" }
 # monad-revm = { path = "../../revm/crates/monad-revm" }
