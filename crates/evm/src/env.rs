@@ -9,7 +9,7 @@ use revm::{
 };
 
 /// Container type that holds both the configuration and block environment for EVM execution.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EvmEnv<Spec = SpecId, BlockEnv = revm::context::BlockEnv> {
     /// The configuration environment with handler settings
     pub cfg_env: CfgEnv<Spec>,
@@ -24,7 +24,7 @@ impl<Spec, BlockEnv> EvmEnv<Spec, BlockEnv> {
     ///
     /// * `cfg_env_with_handler_cfg` - The configuration environment with handler settings
     /// * `block` - The block environment containing block-specific data
-    pub const fn new(cfg_env: CfgEnv<Spec>, block_env: BlockEnv) -> Self {
+    pub fn new(cfg_env: CfgEnv<Spec>, block_env: BlockEnv) -> Self {
         Self { cfg_env, block_env }
     }
 }
@@ -138,6 +138,16 @@ impl<Spec, BlockEnv: BlockEnvironment> EvmEnv<Spec, BlockEnv> {
 impl<Spec, BlockEnv> From<(CfgEnv<Spec>, BlockEnv)> for EvmEnv<Spec, BlockEnv> {
     fn from((cfg_env, block_env): (CfgEnv<Spec>, BlockEnv)) -> Self {
         Self { cfg_env, block_env }
+    }
+}
+
+impl<Spec, BlockEnv> Default for EvmEnv<Spec, BlockEnv>
+where
+    Spec: Default + Into<SpecId> + Clone,
+    BlockEnv: Default,
+{
+    fn default() -> Self {
+        Self { cfg_env: CfgEnv::default(), block_env: BlockEnv::default() }
     }
 }
 
