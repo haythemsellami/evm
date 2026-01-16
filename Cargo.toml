@@ -57,8 +57,8 @@ op-alloy = { version = "0.23", default-features = false, features = [
 ] }
 
 # revm
-revm = { version = "33.0.0", default-features = false }
-op-revm = { version = "14.0.0", default-features = false }
+revm = { version = "34.0.0", default-features = false }
+op-revm = { version = "15.0.0", default-features = false }
 monad-revm = { git = "https://github.com/haythemsellami/revm", branch = "main" }
 # monad-revm = { path = "../../revm/crates/monad-revm" }
 
