@@ -1,6 +1,7 @@
 //! State changes that are not related to transactions.
 
 use super::{calc, BlockExecutionError};
+use alloc::boxed::Box;
 use alloy_consensus::BlockHeader;
 use alloy_eips::eip4895::{Withdrawal, Withdrawals};
 use alloy_hardforks::EthereumHardforks;
@@ -128,9 +129,8 @@ where
             Account {
                 info: account.clone(),
                 original_info: Box::new(account.clone()),
-                storage: Default::default(),
                 status: AccountStatus::Touched,
-                transaction_id: 0,
+                ..Default::default()
             },
         ))
     };
