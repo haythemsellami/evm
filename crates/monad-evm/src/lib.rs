@@ -7,7 +7,7 @@
 //! - [`MonadEvmFactory`]: Factory implementing [`alloy_evm::EvmFactory`] trait
 //! - [`MonadContext`]: Type alias for Monad EVM context (re-exported from monad-revm)
 
-use alloy_evm::{precompiles::PrecompilesMap, Database, Evm, EvmEnv, EvmFactory};
+use alloy_evm::{Database, Evm, EvmEnv, EvmFactory};
 use alloy_primitives::{Address, Bytes};
 use monad_revm::{
     instructions::MonadInstructions, precompiles::MonadPrecompiles, DefaultMonad, MonadBuilder,
@@ -165,7 +165,7 @@ impl EvmFactory for MonadEvmFactory {
     type HaltReason = HaltReason;
     type Spec = MonadSpecId;
     type BlockEnv = BlockEnv;
-    type Precompiles = PrecompilesMap;
+    type Precompiles = MonadPrecompiles;
 
     fn create_evm<DB: Database>(
         &self,
@@ -181,9 +181,7 @@ impl EvmFactory for MonadEvmFactory {
                 .with_block(input.block_env)
                 .with_cfg(monad_cfg)
                 .build_monad_with_inspector(NoOpInspector {})
-                .with_precompiles(PrecompilesMap::from_static(
-                    MonadPrecompiles::new_with_spec(spec_id).precompiles(),
-                )),
+                .with_precompiles(MonadPrecompiles::new_with_spec(spec_id)),
             inspect: false,
         }
     }
@@ -203,9 +201,7 @@ impl EvmFactory for MonadEvmFactory {
                 .with_block(input.block_env)
                 .with_cfg(monad_cfg)
                 .build_monad_with_inspector(inspector)
-                .with_precompiles(PrecompilesMap::from_static(
-                    MonadPrecompiles::new_with_spec(spec_id).precompiles(),
-                )),
+                .with_precompiles(MonadPrecompiles::new_with_spec(spec_id)),
             inspect: true,
         }
     }
