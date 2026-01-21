@@ -7,11 +7,12 @@
 //! - [`MonadEvmFactory`]: Factory implementing [`alloy_evm::EvmFactory`] trait
 //! - [`MonadContext`]: Type alias for Monad EVM context (re-exported from monad-revm)
 
-use alloy_evm::{Database, Evm, EvmEnv, EvmFactory};
+use alloy_evm::{precompiles::PrecompilesMap, Database, Evm, EvmEnv, EvmFactory};
 use alloy_primitives::{Address, Bytes};
 use monad_revm::{
-    instructions::MonadInstructions, precompiles::MonadPrecompiles, DefaultMonad, MonadBuilder,
-    MonadCfgEnv, MonadEvm as InnerMonadEvm, MonadSpecId,
+    instructions::MonadInstructions,
+    precompiles::{extend_monad_precompiles, MonadPrecompiles},
+    DefaultMonad, MonadBuilder, MonadCfgEnv, MonadEvm as InnerMonadEvm, MonadSpecId,
 };
 use revm::{
     context::{BlockEnv, TxEnv},
@@ -32,7 +33,7 @@ pub use monad_revm::{handler::MonadHandler, MonadContext};
 /// support. [`Inspector`] support is configurable at runtime because it's part of the underlying
 /// [`InnerMonadEvm`](monad_revm::MonadEvm) type.
 #[allow(missing_debug_implementations)] // MonadEvm doesn't impl Debug
-pub struct MonadEvm<DB: Database, I, P = MonadPrecompiles> {
+pub struct MonadEvm<DB: Database, I, P = PrecompilesMap> {
     inner: InnerMonadEvm<MonadContext<DB>, I, MonadInstructions<MonadContext<DB>>, P>,
     inspect: bool,
 }
@@ -165,7 +166,7 @@ impl EvmFactory for MonadEvmFactory {
     type HaltReason = HaltReason;
     type Spec = MonadSpecId;
     type BlockEnv = BlockEnv;
-    type Precompiles = MonadPrecompiles;
+    type Precompiles = PrecompilesMap;
 
     fn create_evm<DB: Database>(
         &self,
@@ -175,13 +176,19 @@ impl EvmFactory for MonadEvmFactory {
         let spec_id = input.cfg_env.spec;
         // Convert CfgEnv<MonadSpecId> to MonadCfgEnv for Monad-specific defaults (128KB code size)
         let monad_cfg = MonadCfgEnv::from(input.cfg_env);
+
+        // Create PrecompilesMap from Monad static precompiles and extend with staking precompile
+        let monad_precompiles = MonadPrecompiles::new_with_spec(spec_id);
+        let mut precompiles = PrecompilesMap::from_static(monad_precompiles.precompiles());
+        extend_monad_precompiles(&mut precompiles);
+
         MonadEvm {
             inner: Context::monad()
                 .with_db(db)
                 .with_block(input.block_env)
                 .with_cfg(monad_cfg)
                 .build_monad_with_inspector(NoOpInspector {})
-                .with_precompiles(MonadPrecompiles::new_with_spec(spec_id)),
+                .with_precompiles(precompiles),
             inspect: false,
         }
     }
@@ -195,13 +202,19 @@ impl EvmFactory for MonadEvmFactory {
         let spec_id = input.cfg_env.spec;
         // Convert CfgEnv<MonadSpecId> to MonadCfgEnv for Monad-specific defaults (128KB code size)
         let monad_cfg = MonadCfgEnv::from(input.cfg_env);
+
+        // Create PrecompilesMap from Monad static precompiles and extend with staking precompile
+        let monad_precompiles = MonadPrecompiles::new_with_spec(spec_id);
+        let mut precompiles = PrecompilesMap::from_static(monad_precompiles.precompiles());
+        extend_monad_precompiles(&mut precompiles);
+
         MonadEvm {
             inner: Context::monad()
                 .with_db(db)
                 .with_block(input.block_env)
                 .with_cfg(monad_cfg)
                 .build_monad_with_inspector(inspector)
-                .with_precompiles(MonadPrecompiles::new_with_spec(spec_id)),
+                .with_precompiles(precompiles),
             inspect: true,
         }
     }
