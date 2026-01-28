@@ -68,3 +68,8 @@ serde = { version = "1", default-features = false, features = ["derive"] }
 thiserror = { version = "2.0.0", default-features = false }
 serde_json = "1"
 test-case = "3"
+
+# Patch monad-revm's alloy-evm dependency to use the local workspace version
+# This avoids duplicate alloy-evm versions in the dependency tree
+[patch."https://github.com/haythemsellami/evm"]
+alloy-evm = { path = "crates/evm" }
