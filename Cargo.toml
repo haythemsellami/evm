@@ -59,7 +59,7 @@ op-alloy = { version = "0.23", default-features = false, features = [
 # revm
 revm = { version = "34.0.0", default-features = false }
 op-revm = { version = "15.0.0", default-features = false }
-monad-revm = { git = "https://github.com/category-labs/monad-revm", branch = "feat/monad-precompiles-view" }
+monad-revm = { git = "https://github.com/category-labs/monad-revm", branch = "main", features = ["alloy-evm"] }
 
 # misc
 auto_impl = "1"
