@@ -30,4 +30,3 @@ std = [
     "alloy-evm/std",
 ]
 asm-keccak = ["alloy-evm/asm-keccak", "alloy-primitives/asm-keccak", "revm/asm-keccak"]
-monad-revm = ["monad-revm/alloy-evm"]

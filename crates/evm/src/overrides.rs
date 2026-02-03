@@ -12,6 +12,7 @@ use alloy_rpc_types_eth::{
 use revm::{
     bytecode::BytecodeDecodeError,
     context::BlockEnv,
+    context_interface::block::BlobExcessGasAndPrice,
     database::{CacheDB, State},
     state::{Account, AccountStatus, Bytecode, EvmStorageSlot},
     Database, DatabaseCommit,
@@ -77,6 +78,7 @@ where
         random,
         base_fee,
         block_hash,
+        blob_base_fee,
     } = overrides;
 
     if let Some(block_hashes) = block_hash {
@@ -104,6 +106,17 @@ where
     }
     if let Some(base_fee) = base_fee {
         env.basefee = base_fee.saturating_to();
+    }
+    if let Some(blob_base_fee) = blob_base_fee {
+        let blob_gasprice = blob_base_fee.saturating_to();
+        env.blob_excess_gas_and_price = Some(
+            env.blob_excess_gas_and_price
+                .map(|mut b| {
+                    b.blob_gasprice = blob_gasprice;
+                    b
+                })
+                .unwrap_or(BlobExcessGasAndPrice { excess_blob_gas: 0, blob_gasprice }),
+        );
     }
 }
 
