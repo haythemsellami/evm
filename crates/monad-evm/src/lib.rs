@@ -6,12 +6,17 @@
 //! - [`MonadEvm`]: Wrapper implementing [`alloy_evm::Evm`] trait
 //! - [`MonadEvmFactory`]: Factory implementing [`alloy_evm::EvmFactory`] trait
 //! - [`MonadContext`]: Type alias for Monad EVM context (re-exported from monad-revm)
+//! - [`extend_monad_precompiles`]: Function to extend `PrecompilesMap` with staking precompile
 
-use alloy_evm::{precompiles::PrecompilesMap, Database, Evm, EvmEnv, EvmFactory};
-use alloy_primitives::{Address, Bytes};
+use alloy_evm::{
+    precompiles::{DynPrecompile, PrecompileInput, PrecompilesMap},
+    Database, Evm, EvmEnv, EvmFactory,
+};
+use alloy_primitives::{Address, Bytes, U256};
 use monad_revm::{
     instructions::MonadInstructions,
-    precompiles::{extend_monad_precompiles, MonadPrecompiles},
+    precompiles::MonadPrecompiles,
+    staking::{self, StorageReader, STAKING_ADDRESS},
     DefaultMonad, MonadBuilder, MonadCfgEnv, MonadEvm as InnerMonadEvm, MonadSpecId,
 };
 use revm::{
@@ -19,7 +24,8 @@ use revm::{
     context_interface::result::{EVMError, HaltReason, ResultAndState},
     handler::PrecompileProvider,
     inspector::NoOpInspector,
-    interpreter::InterpreterResult,
+    interpreter::{InstructionResult, InterpreterResult},
+    precompile::{PrecompileError, PrecompileId, PrecompileOutput},
     Context, ExecuteEvm, InspectEvm, Inspector, SystemCallEvm,
 };
 use std::ops::{Deref, DerefMut};
@@ -217,5 +223,69 @@ impl EvmFactory for MonadEvmFactory {
                 .with_precompiles(precompiles),
             inspect: true,
         }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PrecompilesMap Integration
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Extend a `PrecompilesMap` with Monad-specific precompiles.
+///
+/// This function adds the staking precompile (at address 0x1000) to the given
+/// `PrecompilesMap` via `set_precompile_lookup`.
+///
+/// # Example
+///
+/// ```ignore
+/// use alloy_evm::precompiles::PrecompilesMap;
+/// use alloy_monad_evm::extend_monad_precompiles;
+///
+/// let mut precompiles = PrecompilesMap::default();
+/// extend_monad_precompiles(&mut precompiles);
+/// ```
+pub fn extend_monad_precompiles(precompiles: &mut PrecompilesMap) {
+    precompiles.set_precompile_lookup(move |address: &Address| {
+        if *address == STAKING_ADDRESS {
+            Some(DynPrecompile::new_stateful(
+                PrecompileId::Custom("MonadStaking".into()),
+                |input: PrecompileInput<'_>| -> Result<PrecompileOutput, PrecompileError> {
+                    // Create a storage reader that uses input.internals.sload()
+                    let mut reader = PrecompileInputStorageReader { internals: input.internals };
+
+                    // Run the staking precompile
+                    match staking::run_staking_with_reader(input.data, input.gas, &mut reader) {
+                        Ok(result) => {
+                            // Convert InterpreterResult to PrecompileOutput
+                            let gas_used = input.gas.saturating_sub(result.gas.remaining());
+                            if result.result == InstructionResult::Return {
+                                Ok(PrecompileOutput::new(gas_used, result.output))
+                            } else if result.result == InstructionResult::PrecompileOOG {
+                                Err(PrecompileError::OutOfGas)
+                            } else {
+                                Err(PrecompileError::Other("Staking precompile error".into()))
+                            }
+                        }
+                        Err(e) => Err(PrecompileError::Other(e.into())),
+                    }
+                },
+            ))
+        } else {
+            None
+        }
+    });
+}
+
+/// Storage reader implementation that uses `PrecompileInput.internals.sload()`.
+struct PrecompileInputStorageReader<'a> {
+    internals: alloy_evm::EvmInternals<'a>,
+}
+
+impl StorageReader for PrecompileInputStorageReader<'_> {
+    fn sload(&mut self, key: U256) -> Result<U256, PrecompileError> {
+        self.internals
+            .sload(STAKING_ADDRESS, key)
+            .map(|r| r.data)
+            .map_err(|e| PrecompileError::Other(format!("Storage read failed: {e:?}").into()))
     }
 }
