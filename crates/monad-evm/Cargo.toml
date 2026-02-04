@@ -1,14 +1,17 @@
 [package]
 name = "alloy-monad-evm"
 description = "Monad EVM implementation"
-
-version.workspace = true
+version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
-authors.workspace = true
-license.workspace = true
-homepage.workspace = true
-repository.workspace = true
+authors = ["Haythem Sellami - Category Labs <hsellami@category.xyz>"]
+license = "MIT"
+homepage = "https://github.com/haythemsellami/evm"
+repository = "https://github.com/haythemsellami/evm"
+documentation = "https://docs.rs/alloy-monad-evm"
+keywords = ["monad", "evm", "alloy", "ethereum", "blockchain"]
+categories = ["cryptography::cryptocurrencies"]
+readme = "README.md"
 
 [lints]
 workspace = true
